@@ -7,3 +7,4 @@ output a single Bible verse.
 ## Requirements
 
 - Python 3
+- A Bible in Zefania XML format (https://sourceforge.net/projects/zefania-sharp/files/Bibles/)
