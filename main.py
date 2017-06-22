@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
+from textwrap import TextWrapper
 import xml.etree.ElementTree as ET
 
 # Handle the CLI arguments
@@ -12,6 +13,10 @@ parser.parse_args()
 ## TODO get file names from args
 inFileName = 'src.xml'
 outFileName = 'out.txt'
+
+# Create the text wrapper
+# TODO- add option to change line width
+wrapper = TextWrapper(width=79, )
 
 tree = ET.parse(inFileName)
 root = tree.getroot()
@@ -26,9 +31,13 @@ for book in root:
 			if chapter.tag == "CHAPTER":
 				chapterNum = chapter.get('cnumber')
 				for verse in chapter:
-					if verse.tag = "VERS":
+					if verse.tag == "VERS":
 						verseNum = verse.get('vnumber')
 						verseContent = verse.text
 						# TODO write out the verse to the output file,
 						# wrapped to 80 lines
-		print("Completed " + bookName)
+						wrappedText = wrapper.fill(verseContent)
+						print(wrappedText)
+						citeLine = "        --" + bookName + " " + chapterNum + ":" + verseNum
+						print(citeLine)
+		#print("Completed " + bookName)
