@@ -4,6 +4,7 @@ import argparse
 import csv
 from textwrap import TextWrapper
 import xml.etree.ElementTree as ET
+import subprocess
 
 # Handle the CLI arguments
 
@@ -16,18 +17,22 @@ correctNamesFile = 'names.csv'
 
 ## TODO get file names from args
 inFileName = 'src.xml'
-outFileName = 'out.txt'
+outDir = 'out/'
+
+# If the dir name doesn't have a trailing slash, add it
+if outDir[-1] != '/':
+	outDir = outdir + '/'
 
 # Create the text wrapper
 # TODO- add option to change line width
-wrapper = TextWrapper(width=79, )
+wrapper = TextWrapper(width=79)
 
 tree = ET.parse(inFileName)
 root = tree.getroot()
 
 # Create a dict of the names from the CSV
-correctNamesReader = csv.DictReader(open(correctNamesFile))
 correctNamesDict = dict()
+correctNamesReader = csv.DictReader(open(correctNamesFile))
 for row in correctNamesReader:
 	correctNamesDict[row['XMLName']] = row['RealName']
 
@@ -39,7 +44,11 @@ for book in root:
 		if bookName in correctNamesDict:
 			bookName = correctNamesDict[bookName]
 
-		# TODO have a dictionary of the Zefania name to the real name
+		# Open the output file, which is the lowercase and underscored version
+		# of the book name
+		outFileName = outDir + bookName.lower().replace(' ', '_')
+		outFile = open(outFileName, 'w')
+
 		for chapter in book:
 			if chapter.tag == "CHAPTER":
 				chapterNum = chapter.get('cnumber')
@@ -49,8 +58,15 @@ for book in root:
 						verseContent = verse.text
 						# TODO write out the verse to the output file,
 						# wrapped to 80 lines
-						wrappedText = wrapper.fill(verseContent)
+						#wrappedText = wrapper.fill(verseContent)
 						#print(wrappedText)
-						citeLine = "        --" + bookName + " " + chapterNum + ":" + verseNum
+						outFile.write(wrapper.fill(verseContent) + "\n")
+						#citeLine = "        --" + bookName + " " + chapterNum + ":" + verseNum
 						#print(citeLine)
-		print(bookName)
+						outFile.write("        --" + bookName + " " + chapterNum + ":" + verseNum + "\n")
+						outFile.write("%\n")
+		outFile.flush()
+		outFile.close()
+		# call strfile on the output to create the .db files for Fortune
+		subprocess.run(['strfile', outFileName, '-s'])
+		print("Completed", bookName)
