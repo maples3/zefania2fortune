@@ -5,36 +5,59 @@ import csv
 from textwrap import TextWrapper
 import xml.etree.ElementTree as ET
 import subprocess
+import os.path
 
 # Handle the CLI arguments
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-i", "--infile", help="The input file to read.  Must be in Zefania XML format.")
-parser.parse_args()
+parser = argparse.ArgumentParser(description="Convert Zefania XML to Fortune-readable files")
+parser.add_argument("in_file",
+	help="The input file to read.  Must be in Zefania XML format.",
+	nargs=1)
+parser.add_argument("-o", "--outdir",
+	help="The directory to store the output files in.",
+	dest="out_dir",
+	default="bible/")
+parser.add_argument("-n", "--names",
+	help="The CSV file to read the name corrections from.  See the provided example.",
+	dest="names_file")
+parser.add_argument("-s", "--strfile",
+	help="Automatically run strfile(1) to create the .db files for Fortune.",
+	dest="strfile",
+	default=False,
+	action='store_true')
+parser.add_argument("-w", "--width",
+	help="The width to wrap the verses to.",
+	type=int,
+	dest='line_width',
+	default=79)
+results = parser.parse_args()
 
-## TODO ask for a CSV names list
-correctNamesFile = 'names.csv'
+# Use the args to determine the files to use
+correctNamesFile = results.names_file
+inFileName = results.in_file[0]
+outDir = results.out_dir
+wrapper = TextWrapper(width=results.line_width)
 
-## TODO get file names from args
-inFileName = 'src.xml'
-outDir = 'out/'
+print(correctNamesFile)
+print(inFileName)
+print(outDir)
 
 # If the dir name doesn't have a trailing slash, add it
 if outDir[-1] != '/':
-	outDir = outdir + '/'
-
-# Create the text wrapper
-# TODO- add option to change line width
-wrapper = TextWrapper(width=79)
+	outDir = outDir + '/'
+# Also make sure it exists
+if not os.path.exists(outDir):
+	subprocess.run(["mkdir", outDir])
 
 tree = ET.parse(inFileName)
 root = tree.getroot()
 
 # Create a dict of the names from the CSV
 correctNamesDict = dict()
-correctNamesReader = csv.DictReader(open(correctNamesFile))
-for row in correctNamesReader:
-	correctNamesDict[row['XMLName']] = row['RealName']
+if correctNamesFile != None:
+	correctNamesReader = csv.DictReader(open(correctNamesFile))
+	for row in correctNamesReader:
+		correctNamesDict[row['XMLName']] = row['RealName']
 
 for book in root:
 	# Iterating over the root's tags, most of which are books
@@ -67,6 +90,7 @@ for book in root:
 						outFile.write("%\n")
 		outFile.flush()
 		outFile.close()
-		# call strfile on the output to create the .db files for Fortune
-		subprocess.run(['strfile', outFileName, '-s'])
+		if results.strfile:
+			# call strfile on the output to create the .db files for Fortune
+			subprocess.run(['strfile', outFileName, '-s'])
 		print("Completed", bookName)
