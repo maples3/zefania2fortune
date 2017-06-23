@@ -8,7 +8,6 @@ import subprocess
 import os.path
 
 # Handle the CLI arguments
-
 parser = argparse.ArgumentParser(description="Convert Zefania XML to Fortune-readable files")
 parser.add_argument("in_file",
 	help="The input file to read.  Must be in Zefania XML format.",
@@ -37,10 +36,6 @@ correctNamesFile = results.names_file
 inFileName = results.in_file[0]
 outDir = results.out_dir
 wrapper = TextWrapper(width=results.line_width)
-
-print(correctNamesFile)
-print(inFileName)
-print(outDir)
 
 # If the dir name doesn't have a trailing slash, add it
 if outDir[-1] != '/':
@@ -94,3 +89,6 @@ for book in root:
 			# call strfile on the output to create the .db files for Fortune
 			subprocess.run(['strfile', outFileName, '-s'])
 		print("Completed", bookName)
+
+if not results.strfile:
+	print("Files are not quite ready for fortune yet; the .db files need to be created")
